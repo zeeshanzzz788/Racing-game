@@ -9,6 +9,13 @@ namespace VelocityRush.Data
         AllWheelDrive
     }
 
+    public enum CarUpgradeType
+    {
+        Engine,
+        Handling,
+        Nitro
+    }
+
     /// <summary>
     /// A single source of truth for a car's mobile-friendly arcade physics preset. Keep the id
     /// stable after release because ProgressionService uses it as a save key.
@@ -65,6 +72,15 @@ namespace VelocityRush.Data
         [Tooltip("How much engine/grip is lost at 100% damage. Keep this below 0.5 for fun arcade racing.")]
         [Range(0f, .8f)] public float maxPerformanceLossAtFullDamage = .35f;
         [Range(.1f, 3f)] public float collisionDamageMultiplier = 1f;
+
+        [Header("Garage Upgrades")]
+        [Range(0, 10)] public int maxUpgradeLevel = 5;
+        [Min(0)] public int engineUpgradeBaseCost = 180;
+        [Min(0)] public int handlingUpgradeBaseCost = 160;
+        [Min(0)] public int nitroUpgradeBaseCost = 200;
+        [Range(0f, .2f)] public float engineBonusPerLevel = .045f;
+        [Range(0f, .2f)] public float handlingBonusPerLevel = .035f;
+        [Range(0f, .2f)] public float nitroBonusPerLevel = .06f;
 
         // Normalized values intended for garage bars, not a second physics model.
         public float SpeedRating => Mathf.InverseLerp(100f, 320f, topSpeedKph);

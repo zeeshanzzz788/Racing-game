@@ -110,3 +110,4 @@ The generated HUD includes a `TouchSteeringWheel`, `MobileButton` instances for 
 - [ ] Touch controls work in a real Android/iOS build, including release outside a button.
 - [ ] Profile CPU, GPU, memory, draw calls and thermal behaviour on low/mid/high device tiers.
 - [ ] Bake lighting and validate the final scene with URP Frame Debugger/RenderDoc before release.
+- [ ] Follow `Docs/MOBILE_POLISH.md` on target devices before enabling the final post-processing/weather quality tier.

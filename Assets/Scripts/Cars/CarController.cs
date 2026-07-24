@@ -3,6 +3,7 @@ using UnityEngine;
 using VelocityRush.Core;
 using VelocityRush.Data;
 using VelocityRush.Input;
+using VelocityRush.Progression;
 
 namespace VelocityRush.Cars
 {
@@ -80,7 +81,7 @@ namespace VelocityRush.Cars
         public float Damage { get; private set; }
         public float DamageNormalized => maxDamage <= 0f ? 0f : Damage / maxDamage;
         public float PerformanceMultiplier => Definition == null ? 1f : Mathf.Clamp01(1f - DamageNormalized * Definition.maxPerformanceLossAtFullDamage);
-        public float NitroNormalized => Definition == null || Definition.nitroCapacity <= 0f ? 0f : nitroRemaining / Definition.nitroCapacity;
+        public float NitroNormalized => Definition == null || Definition.nitroCapacity <= 0f ? 0f : nitroRemaining / (Definition.nitroCapacity * nitroUpgradeMultiplier);
         public float NitroCooldownRemaining => nitroCooldownRemaining;
         public Rigidbody Body => body;
 
@@ -106,6 +107,9 @@ namespace VelocityRush.Cars
         private bool externalHandbrake;
         private float lastDamageTime;
         private float difficultyMultiplier = 1f;
+        private float engineUpgradeMultiplier = 1f;
+        private float handlingUpgradeMultiplier = 1f;
+        private float nitroUpgradeMultiplier = 1f;
         private int drivenWheelCount;
 
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
@@ -142,6 +146,17 @@ namespace VelocityRush.Cars
 
             if (definition == null) return;
             body.mass = definition.mass;
+            if (isPlayer && ProgressionService.Instance != null)
+            {
+                engineUpgradeMultiplier = ProgressionService.Instance.GetUpgradeMultiplier(definition, CarUpgradeType.Engine);
+                handlingUpgradeMultiplier = ProgressionService.Instance.GetUpgradeMultiplier(definition, CarUpgradeType.Handling);
+                nitroUpgradeMultiplier = ProgressionService.Instance.GetUpgradeMultiplier(definition, CarUpgradeType.Nitro);
+            }
+            else
+            {
+                engineUpgradeMultiplier = handlingUpgradeMultiplier = nitroUpgradeMultiplier = 1f;
+            }
+            nitroRemaining = definition.nitroCapacity * nitroUpgradeMultiplier;
             ConfigureWheelsFromPreset();
             ApplyPaintAndDamage();
             if (damageSmoke != null) damageSmoke.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
@@ -167,7 +182,7 @@ namespace VelocityRush.Cars
         public void AddNitro(float seconds)
         {
             if (Definition == null || seconds <= 0f) return;
-            nitroRemaining = Mathf.Clamp(nitroRemaining + seconds, 0f, Definition.nitroCapacity);
+            nitroRemaining = Mathf.Clamp(nitroRemaining + seconds, 0f, Definition.nitroCapacity * nitroUpgradeMultiplier);
         }
 
         /// <summary>Endless mode uses this to increase pace without changing the ScriptableObject asset.</summary>
@@ -274,7 +289,7 @@ namespace VelocityRush.Cars
         {
             float speedFactor = Mathf.Lerp(1f, .32f,
                 Mathf.InverseLerp(20f, Definition.topSpeedKph * difficultyMultiplier, Mathf.Abs(ForwardSpeedKph)));
-            float steeringAngle = input * Definition.steeringAngle * Definition.handling * speedFactor * PerformanceMultiplier;
+            float steeringAngle = input * Definition.steeringAngle * Definition.handling * handlingUpgradeMultiplier * speedFactor * PerformanceMultiplier;
             for (int i = 0; i < wheels.Length; i++)
             {
                 WheelSetup wheel = wheels[i];
@@ -295,7 +310,7 @@ namespace VelocityRush.Cars
                 float speed01 = Mathf.Clamp01(Mathf.Abs(ForwardSpeedKph) / Mathf.Max(1f, Definition.topSpeedKph));
                 float curve = Definition.torqueBySpeed == null ? 1f : Mathf.Max(0f, Definition.torqueBySpeed.Evaluate(speed01));
                 float reverseMultiplier = throttle < 0f ? reverseTorqueMultiplier : 1f;
-                motor = throttle * Definition.motorTorque * curve * PerformanceMultiplier * difficultyMultiplier * reverseMultiplier;
+                motor = throttle * Definition.motorTorque * engineUpgradeMultiplier * curve * PerformanceMultiplier * difficultyMultiplier * reverseMultiplier;
             }
 
             if (changingDirection) brake = Mathf.Max(brake, Mathf.Abs(throttle));
@@ -348,12 +363,12 @@ namespace VelocityRush.Cars
             {
                 IsNitroActive = true;
                 nitroRemaining = Mathf.Max(0f, nitroRemaining - Definition.nitroDrainPerSecond * Time.fixedDeltaTime);
-                body.AddForce(transform.forward * Definition.nitroForce * PerformanceMultiplier, ForceMode.Force);
+                body.AddForce(transform.forward * Definition.nitroForce * nitroUpgradeMultiplier * PerformanceMultiplier, ForceMode.Force);
                 if (nitroRemaining <= 0f) nitroCooldownRemaining = Definition.nitroCooldown;
             }
             else if (nitroCooldownRemaining <= 0f && Definition.nitroRechargePerSecond > 0f)
             {
-                nitroRemaining = Mathf.Min(Definition.nitroCapacity, nitroRemaining + Definition.nitroRechargePerSecond * Time.fixedDeltaTime);
+                nitroRemaining = Mathf.Min(Definition.nitroCapacity * nitroUpgradeMultiplier, nitroRemaining + Definition.nitroRechargePerSecond * nitroUpgradeMultiplier * Time.fixedDeltaTime);
             }
 
             if (wasActive != IsNitroActive) NitroStateChanged?.Invoke(IsNitroActive);
@@ -361,7 +376,7 @@ namespace VelocityRush.Cars
 
         private void ApplyFriction(bool handbrake)
         {
-            float grip = Definition.grip * Mathf.Lerp(1f, .82f, DamageNormalized);
+            float grip = Definition.grip * handlingUpgradeMultiplier * Mathf.Lerp(1f, .82f, DamageNormalized);
             for (int i = 0; i < wheels.Length; i++)
             {
                 WheelSetup wheel = wheels[i];
@@ -498,8 +513,8 @@ namespace VelocityRush.Cars
 
                 WheelFrictionCurve forward = wheel.collider.forwardFriction;
                 WheelFrictionCurve sideways = wheel.collider.sidewaysFriction;
-                forward.stiffness = Definition.grip;
-                sideways.stiffness = Definition.grip;
+                forward.stiffness = Definition.grip * handlingUpgradeMultiplier;
+                sideways.stiffness = Definition.grip * handlingUpgradeMultiplier;
                 wheel.collider.forwardFriction = forward;
                 wheel.collider.sidewaysFriction = sideways;
                 baseForwardFriction[i] = forward;

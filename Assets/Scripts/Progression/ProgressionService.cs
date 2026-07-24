@@ -16,6 +16,7 @@ namespace VelocityRush.Progression
         private const string CarUnlockedPrefix = "vr.car.unlocked.";
         private const string BestTimePrefix = "vr.best_time.";
         private const string StarsPrefix = "vr.level.stars.";
+        private const string UpgradePrefix = "vr.car.upgrade.";
 
         public static ProgressionService Instance { get; private set; }
         public event Action<int> CoinsChanged;
@@ -71,6 +72,42 @@ namespace VelocityRush.Progression
             PlayerPrefs.Save();
         }
 
+        public int GetUpgradeLevel(CarDefinition car, CarUpgradeType type)
+        {
+            if (car == null) return 0;
+            return Mathf.Clamp(PlayerPrefs.GetInt(UpgradeKey(car, type), 0), 0, car.maxUpgradeLevel);
+        }
+
+        public int GetUpgradeCost(CarDefinition car, CarUpgradeType type)
+        {
+            if (car == null) return 0;
+            int nextLevel = GetUpgradeLevel(car, type) + 1;
+            if (nextLevel > car.maxUpgradeLevel) return -1;
+            int baseCost = type == CarUpgradeType.Engine ? car.engineUpgradeBaseCost :
+                type == CarUpgradeType.Handling ? car.handlingUpgradeBaseCost : car.nitroUpgradeBaseCost;
+            return Mathf.Max(0, baseCost * nextLevel);
+        }
+
+        public bool TryPurchaseUpgrade(CarDefinition car, CarUpgradeType type)
+        {
+            if (car == null || !IsCarUnlocked(car)) return false;
+            int cost = GetUpgradeCost(car, type);
+            if (cost < 0 || Coins < cost) return false;
+            SetCoins(Coins - cost);
+            PlayerPrefs.SetInt(UpgradeKey(car, type), GetUpgradeLevel(car, type) + 1);
+            PlayerPrefs.Save();
+            return true;
+        }
+
+        public float GetUpgradeMultiplier(CarDefinition car, CarUpgradeType type)
+        {
+            if (car == null) return 1f;
+            int level = GetUpgradeLevel(car, type);
+            float bonus = type == CarUpgradeType.Engine ? car.engineBonusPerLevel :
+                type == CarUpgradeType.Handling ? car.handlingBonusPerLevel : car.nitroBonusPerLevel;
+            return 1f + level * bonus;
+        }
+
         public float GetBestTime(string trackId)
         {
             return PlayerPrefs.GetFloat(BestTimePrefix + trackId, 0f);
@@ -100,6 +137,11 @@ namespace VelocityRush.Progression
             PlayerPrefs.DeleteAll();
             PlayerPrefs.Save();
             CoinsChanged?.Invoke(0);
+        }
+
+        private static string UpgradeKey(CarDefinition car, CarUpgradeType type)
+        {
+            return UpgradePrefix + car.id + "." + type;
         }
 
         private void SetCoins(int value)

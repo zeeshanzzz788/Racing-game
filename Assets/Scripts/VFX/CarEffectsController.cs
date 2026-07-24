@@ -7,6 +7,7 @@ namespace VelocityRush.VFX
     [RequireComponent(typeof(CarController))]
     public class CarEffectsController : MonoBehaviour
     {
+        [SerializeField] private ParticleSystem exhaust;
         [SerializeField] private ParticleSystem dust;
         [SerializeField] private ParticleSystem sparks;
         [SerializeField] private ParticleSystem nitro;
@@ -19,6 +20,7 @@ namespace VelocityRush.VFX
         {
             if (car == null || car.Definition == null) return;
             bool moving = car.CurrentSpeedKph > 15f;
+            SetEmission(exhaust, car.CurrentThrottle > .1f || car.EngineRpm > car.Definition.idleRpm * 1.3f);
             SetEmission(dust, car.IsGrounded && moving && car.IsDrifting);
             SetEmission(nitro, car.IsNitroActive);
         }

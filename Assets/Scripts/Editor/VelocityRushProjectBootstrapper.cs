@@ -16,6 +16,7 @@ using VelocityRush.Core;
 using VelocityRush.Data;
 using VelocityRush.Endless;
 using VelocityRush.Input;
+using VelocityRush.Polish;
 using VelocityRush.Race;
 using VelocityRush.TrackSystem;
 using VelocityRush.UI;
@@ -142,6 +143,42 @@ namespace VelocityRush.EditorTools
             return pipeline;
         }
 
+        private static VolumeProfile CreateMobilePolishProfile()
+        {
+            const string path = "Assets/Settings/Rendering/VP_MobilePolish.asset";
+            VolumeProfile profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(path);
+            if (profile == null)
+            {
+                profile = ScriptableObject.CreateInstance<VolumeProfile>();
+                AssetDatabase.CreateAsset(profile, path);
+            }
+            if (!profile.TryGet(out Bloom bloom)) bloom = profile.Add<Bloom>(true);
+            bloom.intensity.Override(.18f);
+            bloom.threshold.Override(1.15f);
+            bloom.scatter.Override(.55f);
+            if (!profile.TryGet(out ColorAdjustments colorAdjustments)) colorAdjustments = profile.Add<ColorAdjustments>(true);
+            colorAdjustments.postExposure.Override(0f);
+            colorAdjustments.contrast.Override(4f);
+            colorAdjustments.saturation.Override(3f);
+            if (!profile.TryGet(out MotionBlur motionBlur)) motionBlur = profile.Add<MotionBlur>(true);
+            motionBlur.intensity.Override(.08f);
+            EditorUtility.SetDirty(profile);
+            return profile;
+        }
+
+        private static Material CreateSkyboxMaterial()
+        {
+            const string path = "Assets/Art/Materials/M_Skybox_Procedural.mat";
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material != null) return material;
+            Shader shader = Shader.Find("Skybox/Procedural");
+            if (shader == null) return null;
+            material = new Material(shader);
+            if (material.HasProperty("_Exposure")) material.SetFloat("_Exposure", 1f);
+            AssetDatabase.CreateAsset(material, path);
+            return material;
+        }
+
         private static Material CreateMaterial(string path, Color color, float metallic, float smoothness)
         {
             Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -171,6 +208,8 @@ namespace VelocityRush.EditorTools
             bodyCollider.center = new Vector3(0f, .65f, 0f);
             bodyCollider.size = new Vector3(1.7f, .7f, 3.4f);
             root.AddComponent<CarController>();
+            root.AddComponent<CarVisualPolish>();
+            root.AddComponent<CarCinematicPolish>();
             root.AddComponent<CarAudioController>();
             root.AddComponent<CarEffectsController>();
 
@@ -443,6 +482,8 @@ namespace VelocityRush.EditorTools
                 car.driftRearGrip = .58f; car.driftForwardGrip = .72f;
                 car.nitroCapacity = 3.8f + i * .15f; car.nitroForce = 1250f + i * 95f; car.nitroDrainPerSecond = 1f;
                 car.nitroCooldown = 1.25f; car.nitroRechargePerSecond = .35f; car.maxPerformanceLossAtFullDamage = .35f; car.collisionDamageMultiplier = 1f;
+                car.maxUpgradeLevel = 5; car.engineUpgradeBaseCost = 180 + i * 20; car.handlingUpgradeBaseCost = 160 + i * 20; car.nitroUpgradeBaseCost = 200 + i * 20;
+                car.engineBonusPerLevel = .045f; car.handlingBonusPerLevel = .035f; car.nitroBonusPerLevel = .06f;
                 if (car.torqueBySpeed == null || car.torqueBySpeed.length == 0)
                     car.torqueBySpeed = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(.35f, .92f), new Keyframe(.8f, .55f), new Keyframe(1f, 0f));
                 EditorUtility.SetDirty(car); result[i] = car;
@@ -668,19 +709,44 @@ namespace VelocityRush.EditorTools
             GameObject systems = new GameObject("PersistentSystems");
             systems.AddComponent<GameManager>();
             systems.AddComponent<InputManager>();
-            systems.AddComponent<AudioManager>();
+            AudioSource musicSource = systems.AddComponent<AudioSource>();
+            musicSource.loop = true;
+            AudioManager audioManager = systems.AddComponent<AudioManager>();
+            SetObject(audioManager, "musicSource", musicSource);
+            systems.AddComponent<MusicLoopController>();
+            systems.AddComponent<MobileGraphicsController>();
+            systems.AddComponent<CinematicTimeController>();
         }
 
         private static void CreateLighting(Color ambient)
         {
             RenderSettings.ambientMode = AmbientMode.Flat;
             RenderSettings.ambientLight = ambient * .75f;
-            GameObject lightObject = new GameObject("Sun (Baked)");
+            Material skybox = CreateSkyboxMaterial();
+            if (skybox != null) RenderSettings.skybox = skybox;
+            GameObject lightObject = new GameObject("Sun (Mixed)");
             Light sun = lightObject.AddComponent<Light>();
             sun.type = LightType.Directional; sun.intensity = 1.05f; sun.shadows = LightShadows.Soft;
             // One mixed sun supplies vehicle lighting; static geometry receives baked lighting after Bake.
             sun.lightmapBakeType = LightmapBakeType.Mixed;
             lightObject.transform.rotation = Quaternion.Euler(48f, -35f, 0f);
+
+            GameObject volumeObject = new GameObject("Mobile Polish Volume");
+            Volume volume = volumeObject.AddComponent<Volume>();
+            volume.isGlobal = true;
+            volume.sharedProfile = CreateMobilePolishProfile();
+
+            GameObject reflectionObject = new GameObject("Car Reflection Probe (Baked)");
+            ReflectionProbe probe = reflectionObject.AddComponent<ReflectionProbe>();
+            probe.mode = ReflectionProbeMode.Baked;
+            probe.resolution = 128;
+            probe.size = new Vector3(150f, 45f, 150f);
+            probe.center = new Vector3(0f, 10f, 0f);
+
+            GameObject weatherObject = new GameObject("Time Of Day & Weather");
+            TimeOfDayWeatherController weather = weatherObject.AddComponent<TimeOfDayWeatherController>();
+            SetObject(weather, "sun", sun);
+            SetObject(weather, "skyboxMaterial", skybox);
         }
 
         private static void CreateRaceCamera()
@@ -690,7 +756,10 @@ namespace VelocityRush.EditorTools
             cameraObject.transform.position = new Vector3(0f, 5f, -10f);
             UnityEngine.Camera camera = cameraObject.AddComponent<UnityEngine.Camera>();
             camera.clearFlags = CameraClearFlags.Skybox;
+            UniversalAdditionalCameraData cameraData = cameraObject.AddComponent<UniversalAdditionalCameraData>();
+            cameraData.renderPostProcessing = true;
             cameraObject.AddComponent<RaceCameraController>();
+            cameraObject.AddComponent<CameraPolishController>();
         }
 
         private static void CreateMinimapCamera()
