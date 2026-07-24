@@ -53,6 +53,7 @@ namespace VelocityRush.Core
 
             ProgressionService progression = GetComponent<ProgressionService>();
             if (progression == null) progression = gameObject.AddComponent<ProgressionService>();
+            if (GetComponent<LocalLeaderboardService>() == null) gameObject.AddComponent<LocalLeaderboardService>();
             progression.SeedDefaultCars(carCatalog);
             SelectedCar = FindCar(progression.SelectedCarId) ?? FirstUnlockedCar();
         }
@@ -153,7 +154,11 @@ namespace VelocityRush.Core
             if (CurrentSession != null)
             {
                 if (CurrentSession.Mode == GameMode.TimeTrial && result == RaceResult.Won)
+                {
                     ProgressionService.Instance.SetBestTimeIfFaster(CurrentSession.TrackId, elapsedSeconds);
+                    if (LocalLeaderboardService.Instance != null)
+                        LocalLeaderboardService.Instance.SubmitBestTime("time." + CurrentSession.TrackId, "YOU", elapsedSeconds);
+                }
 
                 if (CurrentSession.Mode == GameMode.Campaign && result == RaceResult.Won)
                 {

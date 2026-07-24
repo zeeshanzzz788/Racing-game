@@ -68,6 +68,8 @@ namespace VelocityRush.Endless
         {
             if (!IsRunning) return;
             IsRunning = false;
+            if (VelocityRush.Progression.LocalLeaderboardService.Instance != null)
+                VelocityRush.Progression.LocalLeaderboardService.Instance.SubmitHighScore("endless.distance", "YOU", Score);
             GameManager.Instance.EndRace(RaceResult.Crashed, RunTime);
         }
 
@@ -75,6 +77,8 @@ namespace VelocityRush.Endless
         {
             if (!IsRunning) return;
             IsRunning = false;
+            if (VelocityRush.Progression.LocalLeaderboardService.Instance != null)
+                VelocityRush.Progression.LocalLeaderboardService.Instance.SubmitHighScore("endless.distance", "YOU", Score);
             GameManager.Instance.EndRace(RaceResult.Quit, RunTime);
         }
     }

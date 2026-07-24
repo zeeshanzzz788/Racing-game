@@ -11,8 +11,8 @@
 - **Modes:** Endless, 10-level Campaign, Time Trial with local best times, and 3–5 opponent Quick Race.
 - **Mobile driving:** on-screen steering wheel + hold pedals/nitro, optional tilt, and editor keyboard fallback.
 - **Racing systems:** WheelCollider car physics, waypoint AI/overtakes, grid/countdown, checkpoint/lap validation, modular fixed circuits, pooled procedural Endless generation, hazards, coins, nitro and repair pickups.
-- **Presentation hooks:** chase/cinematic camera, 256px minimap, HUD/speedometer/timer/lap/score/nitro, mobile controls, engine/tire audio hooks, and dust/sparks/nitro particle hooks.
-- **Mobile performance posture:** URP, one mixed/baked directional light per prototype track, low-poly geometry, no required paid dependencies, and explicit quality guidance.
+- **Presentation hooks:** chase/cinematic camera, jump/near-miss slow-mo, 256px minimap, URP car-paint/reflection polish, HUD/speedometer/timer/lap/score/nitro, modern Canvas animation helper, engine/tire/music audio hooks, and exhaust/dust/sparks/nitro particle hooks.
+- **Mobile performance posture:** URP, one mixed/baked directional light, baked probes, light bloom/subtle motion blur, dynamic resolution scaling, low-poly geometry, no required paid dependencies, and explicit quality guidance.
 
 ## Quick start
 
@@ -28,6 +28,7 @@
 - [Setup and scene wiring](Docs/SETUP.md)
 - [Full WheelCollider car controller, wheel setup, tuning and mobile optimisation](Docs/CAR_CONTROLLER.md)
 - [Modular tracks, campaign examples, AI routes and pooled Endless generation](Docs/TRACK_SYSTEMS.md)
+- [URP visual polish, progression, audio and the full mobile 60 FPS optimisation guide](Docs/MOBILE_POLISH.md)
 - [Android/iOS, Quality, and URP recommendations](Docs/MOBILE_SETTINGS.md)
 - [Asset import shortlist and licensing checklist](Docs/ASSET_SHORTLIST.md)
 - [Architecture and extension notes](Docs/ARCHITECTURE.md)

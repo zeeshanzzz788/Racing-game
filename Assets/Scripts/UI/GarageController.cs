@@ -48,6 +48,15 @@ namespace VelocityRush.UI
             Refresh();
         }
 
+        /// <summary>Wire an upgrade button with 0=Engine, 1=Handling, 2=Nitro.</summary>
+        public void PurchaseUpgrade(int upgradeType)
+        {
+            CarDefinition car = CurrentCar();
+            if (car == null || ProgressionService.Instance == null) return;
+            ProgressionService.Instance.TryPurchaseUpgrade(car, (CarUpgradeType)Mathf.Clamp(upgradeType, 0, 2));
+            Refresh();
+        }
+
         public void Back() => GameManager.Instance.ReturnToMainMenu();
 
         private CarDefinition CurrentCar()

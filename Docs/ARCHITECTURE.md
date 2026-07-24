@@ -26,7 +26,8 @@ Start mode → RaceSession → load track scene
 | `UI/UIManager.cs` | Defensive HUD/result display facade. | Replace legacy UGUI `Text` with TMP/UIToolkit while preserving public display methods. |
 | `Race/RaceManager.cs` | Countdown, checkpoint sequence, laps and timer. | Add positions, false-starts, race rules, replay hooks and network authority here. |
 | `Tracks/TrackManager.cs` + `TrackPiece.cs` | Modular fixed-route marker aggregation or pooled Endless connector chain, dynamic difficulty and content spawning. | Add biome/traffic rules, designer piece constraints and pooled VFX. `EndlessTrackGenerator` remains a legacy straight-run fallback. |
-| `Progression/ProgressionService.cs` | Coins, car unlocks, stars, selections and best times. | Wrap encrypted/versioned local storage and cloud sync; migrate PlayerPrefs on first production build. |
+| `Progression/ProgressionService.cs` + `LocalLeaderboardService.cs` | Coins, upgrades, car unlocks, stars, selections, best times and offline leaderboard boards. | Wrap encrypted/versioned local storage and a Unity Gaming Services leaderboard adapter; migrate PlayerPrefs on first production build. |
+| `Polish/` | Dynamic resolution, time/weather, camera slow-mo/shake, Canvas animation and car material polish. | Keep all visual features gated by quality tiers and device profiles. |
 
 ## Scriptable data
 

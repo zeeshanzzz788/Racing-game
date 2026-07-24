@@ -1,6 +1,7 @@
 using UnityEngine;
 using VelocityRush.AudioSystem;
 using VelocityRush.Input;
+using VelocityRush.Polish;
 
 namespace VelocityRush.Core
 {
@@ -19,6 +20,8 @@ namespace VelocityRush.Core
             root.AddComponent<GameManager>();
             root.AddComponent<InputManager>();
             root.AddComponent<AudioManager>();
+            root.AddComponent<MobileGraphicsController>();
+            root.AddComponent<CinematicTimeController>();
         }
     }
 }
