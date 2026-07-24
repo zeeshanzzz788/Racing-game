@@ -11,7 +11,7 @@ namespace VelocityRush.CameraSystem
         [SerializeField] private Transform target;
         [SerializeField] private float height = 72f;
         [SerializeField] private bool rotateWithPlayer;
-        private PlayerCarController car;
+        private CarController car;
 
         private void OnEnable()
         {
@@ -34,7 +34,7 @@ namespace VelocityRush.CameraSystem
                 : Quaternion.Euler(90f, 0f, 0f);
         }
 
-        public void SetTarget(PlayerCarController controller)
+        public void SetTarget(CarController controller)
         {
             car = controller;
             target = controller == null ? null : controller.transform;

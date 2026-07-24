@@ -22,7 +22,7 @@ namespace VelocityRush.UI
         [SerializeField] private Text resultTitleText;
         [SerializeField] private Text resultTimeText;
 
-        private PlayerCarController player;
+        private CarController player;
 
         private void Start()
         {

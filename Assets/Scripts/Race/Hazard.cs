@@ -15,7 +15,7 @@ namespace VelocityRush.Race
 
         private void Hit(Collider other)
         {
-            PlayerCarController car = other.GetComponentInParent<PlayerCarController>();
+            CarController car = other.GetComponentInParent<CarController>();
             if (car == null || !car.IsPlayer) return;
             Rigidbody body = car.GetComponent<Rigidbody>();
             if (body != null) body.AddForce(-car.transform.forward * impactForce, ForceMode.Impulse);

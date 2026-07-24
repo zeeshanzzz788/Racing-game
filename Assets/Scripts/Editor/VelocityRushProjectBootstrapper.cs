@@ -166,7 +166,7 @@ namespace VelocityRush.EditorTools
             BoxCollider bodyCollider = root.AddComponent<BoxCollider>();
             bodyCollider.center = new Vector3(0f, .65f, 0f);
             bodyCollider.size = new Vector3(1.7f, .7f, 3.4f);
-            root.AddComponent<PlayerCarController>();
+            root.AddComponent<CarController>();
             root.AddComponent<CarAudioController>();
             root.AddComponent<CarEffectsController>();
 
@@ -290,8 +290,15 @@ namespace VelocityRush.EditorTools
                 }
                 car.id = ids[i]; car.displayName = names[i]; car.description = "A mobile-tuned " + names[i] + " built for Velocity Rush.";
                 car.prefab = prefab; car.bodyColor = colors[i]; car.unlockedByDefault = i == 0; car.unlockCost = costs[i];
-                car.topSpeedKph = speed[i]; car.motorTorque = torque[i]; car.handling = handling[i]; car.grip = .95f + i * .06f;
-                car.nitroCapacity = 3.8f + i * .15f; car.nitroForce = 1250f + i * 95f;
+                car.driveLayout = i == 1 ? DriveLayout.RearWheelDrive : DriveLayout.AllWheelDrive;
+                car.topSpeedKph = speed[i]; car.maxReverseKph = 36f; car.motorTorque = torque[i]; car.brakeTorque = 4300f + i * 120f;
+                car.frontBrakeBias = .64f; car.handling = handling[i]; car.grip = .95f + i * .06f; car.mass = 1180f + i * 35f;
+                car.suspensionTravel = .18f; car.suspensionSpring = 36000f; car.suspensionDamper = 4500f;
+                car.driftRearGrip = .58f; car.driftForwardGrip = .72f;
+                car.nitroCapacity = 3.8f + i * .15f; car.nitroForce = 1250f + i * 95f; car.nitroDrainPerSecond = 1f;
+                car.nitroCooldown = 1.25f; car.nitroRechargePerSecond = .35f; car.maxPerformanceLossAtFullDamage = .35f; car.collisionDamageMultiplier = 1f;
+                if (car.torqueBySpeed == null || car.torqueBySpeed.length == 0)
+                    car.torqueBySpeed = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(.35f, .92f), new Keyframe(.8f, .55f), new Keyframe(1f, 0f));
                 EditorUtility.SetDirty(car); result[i] = car;
             }
             return result;

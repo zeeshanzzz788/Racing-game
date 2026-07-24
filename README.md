@@ -26,6 +26,7 @@
 ## Documentation
 
 - [Setup and scene wiring](Docs/SETUP.md)
+- [Full WheelCollider car controller, wheel setup, tuning and mobile optimisation](Docs/CAR_CONTROLLER.md)
 - [Android/iOS, Quality, and URP recommendations](Docs/MOBILE_SETTINGS.md)
 - [Asset import shortlist and licensing checklist](Docs/ASSET_SHORTLIST.md)
 - [Architecture and extension notes](Docs/ARCHITECTURE.md)

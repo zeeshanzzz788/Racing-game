@@ -17,7 +17,7 @@ namespace VelocityRush.Endless
         public float RunTime { get; private set; }
         public int Score { get; private set; }
         public bool IsRunning { get; private set; }
-        private PlayerCarController player;
+        private CarController player;
         private UIManager ui;
 
         private void Start()

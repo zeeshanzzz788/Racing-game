@@ -40,7 +40,7 @@ For normal play start in `MainMenu`. `RuntimeBootstrap` creates the persistent s
 
 1. Duplicate `PF_PrototypeCar` into `Assets/Prefabs/Cars/`.
 2. Keep the root at scale **(1,1,1)**; use **1 Unity unit = 1 metre**. Add one `Rigidbody`, one body collider, and four child `WheelCollider`s.
-3. Name each wheel visual child `Visual`; `PlayerCarController` automatically discovers child `WheelCollider`s and updates this visual transform from `WheelCollider.GetWorldPose`.
+3. Name each wheel visual child `Visual`; `CarController` (and the retained `PlayerCarController` compatibility subclass) automatically discovers child `WheelCollider`s and updates this visual transform from `WheelCollider.GetWorldPose`.
 4. Place front wheels at local `z > 0`; this controller uses that convention to steer them. Rear wheels drive by default; enable all-wheel drive in the inspector if desired.
 5. Create/update a `CarDefinition` under `Assets/Resources/Data/Cars/`, assign the prefab, identity key, unlock cost, body color and physics values. The identity `id` is a save key—do not change it after shipping.
 6. Tune on device: WheelCollider radius, suspension, centre of mass, mass, torque, grip and top speed interact. Avoid non-uniform parent scale.

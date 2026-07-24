@@ -31,6 +31,7 @@ namespace VelocityRush.Input
         private bool brakePressed;
         private bool nitroPressed;
         private bool handbrakePressed;
+        private float tiltNeutralX;
 
         private void Awake()
         {
@@ -46,7 +47,7 @@ namespace VelocityRush.Input
         private void Update()
         {
             if (steeringMode == SteeringMode.Tilt && Application.isMobilePlatform)
-                Steering = Mathf.Clamp(UnityEngine.Input.acceleration.x * tiltSensitivity, -1f, 1f);
+                Steering = Mathf.Clamp((UnityEngine.Input.acceleration.x - tiltNeutralX) * tiltSensitivity, -1f, 1f);
             else
                 Steering = Mathf.MoveTowards(Steering, wheelSteering, Time.unscaledDeltaTime / steeringReturnSpeed);
 
@@ -77,6 +78,13 @@ namespace VelocityRush.Input
         {
             steeringMode = (SteeringMode)Mathf.Clamp(mode, 0, 1);
             wheelSteering = 0f;
+            if (steeringMode == SteeringMode.Tilt) CalibrateTilt();
+        }
+
+        /// <summary>Call from a settings button while the device is held in the desired neutral position.</summary>
+        public void CalibrateTilt()
+        {
+            tiltNeutralX = Application.isMobilePlatform ? UnityEngine.Input.acceleration.x : 0f;
         }
 
         public void SetAccelerate(bool pressed) => acceleratePressed = pressed;

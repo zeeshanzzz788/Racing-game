@@ -21,8 +21,14 @@ namespace VelocityRush.UI
             if (InputManager.Instance != null) InputManager.Instance.SetSteeringMode(mode);
         }
 
+        public void CalibrateTilt()
+        {
+            if (InputManager.Instance != null) InputManager.Instance.CalibrateTilt();
+        }
+
         public void SetQuality(int qualityIndex)
         {
+            if (QualitySettings.names.Length == 0) return;
             QualitySettings.SetQualityLevel(Mathf.Clamp(qualityIndex, 0, QualitySettings.names.Length - 1), true);
         }
     }

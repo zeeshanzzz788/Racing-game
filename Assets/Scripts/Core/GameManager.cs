@@ -31,11 +31,11 @@ namespace VelocityRush.Core
         public IReadOnlyList<TrackDefinition> Tracks => trackCatalog;
         public IReadOnlyList<CampaignLevelDefinition> CampaignLevels => campaignLevels;
         public RaceSession CurrentSession { get; private set; }
-        public PlayerCarController PlayerCar { get; private set; }
+        public CarController PlayerCar { get; private set; }
         public CarDefinition SelectedCar { get; private set; }
         public bool RaceFinished { get; private set; }
 
-        public event Action<PlayerCarController> PlayerSpawned;
+        public event Action<CarController> PlayerSpawned;
         public event Action<RaceResult, float> RaceEnded;
 
         private void Awake()
@@ -126,7 +126,7 @@ namespace VelocityRush.Core
                 SpawnOpponents(raceManager, CurrentSession.OpponentCount);
         }
 
-        public PlayerCarController SpawnPlayerAt(Transform start)
+        public CarController SpawnPlayerAt(Transform start)
         {
             CarDefinition car = SelectedCar ?? FirstUnlockedCar();
             if (car == null || car.prefab == null || start == null)
@@ -137,8 +137,8 @@ namespace VelocityRush.Core
 
             GameObject instance = Instantiate(car.prefab, start.position, start.rotation);
             instance.name = "Player_" + car.displayName;
-            PlayerCar = instance.GetComponent<PlayerCarController>();
-            if (PlayerCar == null) PlayerCar = instance.AddComponent<PlayerCarController>();
+            PlayerCar = instance.GetComponent<CarController>();
+            if (PlayerCar == null) PlayerCar = instance.AddComponent<CarController>();
             PlayerCar.Initialize(car, true);
             PlayerSpawned?.Invoke(PlayerCar);
             return PlayerCar;
@@ -208,8 +208,8 @@ namespace VelocityRush.Core
                 CarDefinition definition = candidates[(i + 1) % candidates.Count];
                 GameObject instance = Instantiate(definition.prefab, start.position, start.rotation);
                 instance.name = "AI_" + (i + 1) + "_" + definition.displayName;
-                PlayerCarController controller = instance.GetComponent<PlayerCarController>();
-                if (controller == null) controller = instance.AddComponent<PlayerCarController>();
+                CarController controller = instance.GetComponent<CarController>();
+                if (controller == null) controller = instance.AddComponent<CarController>();
                 controller.Initialize(definition, false);
                 AICarController ai = instance.GetComponent<AICarController>();
                 if (ai == null) ai = instance.AddComponent<AICarController>();

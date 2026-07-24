@@ -33,7 +33,7 @@ namespace VelocityRush.Endless
             for (int i = 0; i < segmentsAhead; i++) CreateSegment();
         }
 
-        public void SetPlayer(PlayerCarController car)
+        public void SetPlayer(CarController car)
         {
             player = car == null ? null : car.transform;
         }

@@ -110,7 +110,7 @@ namespace VelocityRush.Race
 
         private void SetAllCarsEnabled(bool enabled)
         {
-            foreach (PlayerCarController car in FindObjectsOfType<PlayerCarController>())
+            foreach (CarController car in FindObjectsOfType<CarController>())
                 car.SetInputEnabled(enabled);
         }
     }

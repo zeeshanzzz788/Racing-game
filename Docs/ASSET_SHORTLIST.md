@@ -26,7 +26,7 @@ The repository is intentionally runnable without third-party content. Treat this
 ## Suggested import order
 
 1. Establish final visual direction with a small low-poly environment/vehicle kit and a test circuit.
-2. Replace only the prototype car meshes/materials while retaining `PlayerCarController` and WheelCollider layout.
+2. Replace only the prototype car meshes/materials while retaining `CarController` and the WheelCollider layout.
 3. Add a vetted environment kit, generate LODs/colliders/lightmap UVs, then bake one representative circuit.
 4. Add audio and a minimal VFX pack; profile with five cars and all effects visible.
 5. Consider optional camera/mobile-service/editor tools only after the core race meets frame-time/memory budgets.

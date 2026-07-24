@@ -34,7 +34,7 @@ namespace VelocityRush.Race
         private void OnTriggerEnter(Collider other)
         {
             if (collected) return;
-            PlayerCarController car = other.GetComponentInParent<PlayerCarController>();
+            CarController car = other.GetComponentInParent<CarController>();
             if (car == null || !car.IsPlayer) return;
             collected = true;
             if (type == CollectibleType.Coin && ProgressionService.Instance != null)

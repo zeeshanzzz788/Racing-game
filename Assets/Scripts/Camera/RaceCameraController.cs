@@ -20,7 +20,7 @@ namespace VelocityRush.CameraSystem
 
         private Vector3 velocity;
         private UnityEngine.Camera cachedCamera;
-        private PlayerCarController car;
+        private CarController car;
 
         private void Awake() => cachedCamera = GetComponent<UnityEngine.Camera>();
 
@@ -50,7 +50,7 @@ namespace VelocityRush.CameraSystem
                 cachedCamera.fieldOfView = Mathf.Lerp(baseFov, maxFov, Mathf.InverseLerp(0f, car.Definition.topSpeedKph, car.CurrentSpeedKph));
         }
 
-        public void SetTarget(PlayerCarController controller)
+        public void SetTarget(CarController controller)
         {
             car = controller;
             target = controller == null ? null : controller.transform;

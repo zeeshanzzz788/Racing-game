@@ -21,7 +21,7 @@ Start mode → RaceSession → load track scene
 | Script | Responsibility | Extension seam |
 | --- | --- | --- |
 | `Core/GameManager.cs` | Persistent app/session coordinator, catalog selection, scene loading, player/AI spawn and result settlement. | Replace direct `Resources` catalogs with Addressables/catalog service for a content-heavy release. |
-| `Cars/PlayerCarController.cs` | WheelCollider motor/steer/brake/grip/nitro/downforce behavior and player/AI input selection. | Replace with a tested custom vehicle model only behind the same public input/stat API. |
+| `Cars/CarController.cs` (`PlayerCarController` compatibility subclass) | WheelCollider suspension, drivetrain, drift, damage, nitro, RPM and player/AI input selection. | Replace with a tested custom vehicle model only behind the same public input/stat API. |
 | `Input/InputManager.cs` | Wheel/tilt/pedal input values independent of vehicle code. | Swap internals for Input System action maps, gamepad support, remapping and accessibility presets. |
 | `UI/UIManager.cs` | Defensive HUD/result display facade. | Replace legacy UGUI `Text` with TMP/UIToolkit while preserving public display methods. |
 | `Race/RaceManager.cs` | Countdown, checkpoint sequence, laps and timer. | Add positions, false-starts, race rules, replay hooks and network authority here. |
