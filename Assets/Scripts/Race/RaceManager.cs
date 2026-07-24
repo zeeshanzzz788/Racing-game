@@ -3,6 +3,7 @@ using UnityEngine;
 using VelocityRush.Cars;
 using VelocityRush.Core;
 using VelocityRush.Data;
+using VelocityRush.TrackSystem;
 using VelocityRush.UI;
 
 namespace VelocityRush.Race
@@ -15,6 +16,8 @@ namespace VelocityRush.Race
         [SerializeField] private Transform[] opponentStarts;
         [SerializeField] private Checkpoint[] orderedCheckpoints;
         [SerializeField] private WaypointCircuit waypoints;
+        [Tooltip("Optional fixed modular track source. Its AI markers override Waypoints at race start.")]
+        [SerializeField] private TrackManager trackManager;
         [SerializeField, Min(1)] private int fallbackLaps = 3;
         [SerializeField] private float countdownSeconds = 3f;
 
@@ -30,6 +33,11 @@ namespace VelocityRush.Race
         private void Start()
         {
             ui = FindObjectOfType<UIManager>();
+            if (trackManager != null)
+            {
+                trackManager.RefreshFixedCircuitWaypoints();
+                if (trackManager.CircuitWaypoints != null) waypoints = trackManager.CircuitWaypoints;
+            }
             RaceSession session = GameManager.Instance == null ? null : GameManager.Instance.CurrentSession;
             LapsToComplete = session == null || session.Laps <= 0 ? fallbackLaps : session.Laps;
             CurrentLap = 1;

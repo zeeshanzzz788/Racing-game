@@ -19,8 +19,8 @@ The project has no binary art dependencies. Unity will regenerate its `Library/`
 3. In **Edit → Project Settings → Player → Other Settings**, choose **Both** for **Active Input Handling**. Restart the editor when asked.
 4. Select **Velocity Rush → Create Prototype Content**.
    - It creates a URP Pipeline Asset + Universal Renderer in `Assets/Settings/Rendering/` and makes it active.
-   - It creates the six car assets, three track assets, ten campaign-level assets, primitive car/pickup/segment prefabs and generated scenes.
-   - It adds `MainMenu`, `Garage`, `LevelSelect`, `DesertCircuit`, `CityCircuit`, `CoastCircuit`, and `EndlessRun` to Build Settings.
+   - It creates the six car assets, five track assets, ten campaign-level assets, primitive car/pickup/modular-track prefabs and generated scenes.
+   - It adds `MainMenu`, `Garage`, `LevelSelect`, `DesertCircuit`, `CityCircuit`, `CoastCircuit`, `MountainSprint`, `HarborRun`, and `EndlessRun` to Build Settings.
    - It may ask before replacing an existing generated scene; choose **Keep Existing** once you begin hand-authoring it.
 5. Open `Assets/Scenes/MainMenu.unity`, press **Play**, and use the keyboard (`WASD`/arrows, Left Shift nitro, Space handbrake) or the touch controls in Device Simulator/a device.
 
@@ -31,8 +31,8 @@ The project has no binary art dependencies. Unity will regenerate its `Library/`
 | `MainMenu` | Play, Modes, Garage, Settings and Quit UI; persistent game/input/audio services begin here. |
 | `Garage` | Browse/select/unlock six cars. Selection and coins persist through `PlayerPrefs`. |
 | `LevelSelect` | Ten Campaign buttons driven by `CampaignLevelDefinition` assets. |
-| `DesertCircuit`, `CityCircuit`, `CoastCircuit` | Lightweight rectangle-loop circuits with spawn grid, checkpoints, AI route, HUD and mobile controls. |
-| `EndlessRun` | Infinite forward segment generator with coins, nitro and obstacles. |
+| `DesertCircuit`, `CityCircuit`, `CoastCircuit`, `MountainSprint`, `HarborRun` | Five lightweight campaign-ready circuit scenes with spawn grid, checkpoints, AI route, HUD and mobile controls. |
+| `EndlessRun` | Pooled modular segment generator with turns/hills/jumps, coins, nitro, repair power-ups and obstacles. |
 
 For normal play start in `MainMenu`. `RuntimeBootstrap` creates the persistent services when a race scene is opened directly for construction; it uses fallback race settings because no menu session was selected.
 
@@ -79,7 +79,7 @@ For normal play start in `MainMenu`. `RuntimeBootstrap` creates the persistent s
 | Time Trial | `GameManager.StartTimeTrial(track, laps)` | No AI; per-track `PlayerPrefs` best record |
 | Endless | `GameManager.StartEndless(track)` | `EndlessRunManager`, `EndlessTrackGenerator`, pickup/hazard prefabs |
 
-The endless generator’s prototype assumes forward +Z, fixed-length segments. For a shipping game, replace `Destroy/Instantiate` with a pool and use connector transforms/weighted segment sets if the course bends.
+The preferred `TrackManager` Endless setup pools modular pieces and connects Entry/Exit transforms, so it supports turns, hills, jumps and weighted difficulty rules. The older `EndlessTrackGenerator` remains only as a compatibility fallback for existing straight +Z scenes; use `TrackManager` for new content.
 
 ## 7. Wire touch controls and UI
 

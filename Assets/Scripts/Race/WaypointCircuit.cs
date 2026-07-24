@@ -14,6 +14,12 @@ namespace VelocityRush.Race
             return waypoints[(index % Count + Count) % Count];
         }
 
+        /// <summary>Used by TrackManager when a fixed modular circuit is assembled in the scene.</summary>
+        public void SetWaypoints(Transform[] value)
+        {
+            waypoints = value ?? new Transform[0];
+        }
+
         private void OnDrawGizmosSelected()
         {
             if (Count < 2) return;

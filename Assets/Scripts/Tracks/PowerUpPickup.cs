@@ -1,21 +1,25 @@
 using UnityEngine;
 using VelocityRush.Cars;
-using VelocityRush.Progression;
-using VelocityRush.TrackSystem;
 
-namespace VelocityRush.Race
+namespace VelocityRush.TrackSystem
 {
-    public enum CollectibleType { Coin, Nitro }
-
-    [RequireComponent(typeof(Collider))]
-    public class Collectible : MonoBehaviour
+    public enum TrackPowerUpType
     {
-        [SerializeField] private CollectibleType type = CollectibleType.Coin;
-        [SerializeField, Min(1)] private int coinValue = 5;
-        [SerializeField, Min(.1f)] private float nitroSeconds = 1f;
-        [SerializeField] private float spinDegreesPerSecond = 120f;
-        [SerializeField] private float bobHeight = .15f;
-        [SerializeField] private float bobSpeed = 2f;
+        Nitro,
+        Repair
+    }
+
+    /// <summary>Reusable Endless/track power-up. Coins remain handled by Race.Collectible.</summary>
+    [RequireComponent(typeof(Collider))]
+    public class PowerUpPickup : MonoBehaviour
+    {
+        [SerializeField] private TrackPowerUpType type = TrackPowerUpType.Repair;
+        [SerializeField, Min(.1f)] private float nitroSeconds = 1.5f;
+        [SerializeField, Min(1f)] private float repairAmount = 18f;
+        [SerializeField] private float spinDegreesPerSecond = 130f;
+        [SerializeField] private float bobHeight = .18f;
+        [SerializeField] private float bobFrequency = 2.2f;
+
         private Vector3 origin;
         private bool collected;
 
@@ -34,7 +38,7 @@ namespace VelocityRush.Race
         private void Update()
         {
             transform.Rotate(Vector3.up, spinDegreesPerSecond * Time.deltaTime, Space.World);
-            transform.position = origin + Vector3.up * (Mathf.Sin(Time.time * bobSpeed) * bobHeight);
+            transform.position = origin + Vector3.up * (Mathf.Sin(Time.time * bobFrequency) * bobHeight);
         }
 
         private void OnTriggerEnter(Collider other)
@@ -43,10 +47,8 @@ namespace VelocityRush.Race
             CarController car = other.GetComponentInParent<CarController>();
             if (car == null || !car.IsPlayer) return;
             collected = true;
-            if (type == CollectibleType.Coin && ProgressionService.Instance != null)
-                ProgressionService.Instance.AddCoins(coinValue);
-            else if (type == CollectibleType.Nitro)
-                car.AddNitro(nitroSeconds);
+            if (type == TrackPowerUpType.Nitro) car.AddNitro(nitroSeconds);
+            else car.Repair(repairAmount);
 
             PooledTrackObject pooled = GetComponent<PooledTrackObject>();
             if (pooled != null) pooled.ReturnToPool();

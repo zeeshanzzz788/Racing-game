@@ -17,6 +17,7 @@ using VelocityRush.Data;
 using VelocityRush.Endless;
 using VelocityRush.Input;
 using VelocityRush.Race;
+using VelocityRush.TrackSystem;
 using VelocityRush.UI;
 
 namespace VelocityRush.EditorTools
@@ -32,7 +33,7 @@ namespace VelocityRush.EditorTools
         private const string SceneFolder = "Assets/Scenes";
         private static readonly string[] SceneNames =
         {
-            "MainMenu", "Garage", "LevelSelect", "DesertCircuit", "CityCircuit", "CoastCircuit", "EndlessRun"
+            "MainMenu", "Garage", "LevelSelect", "DesertCircuit", "CityCircuit", "CoastCircuit", "MountainSprint", "HarborRun", "EndlessRun"
         };
 
         [MenuItem("Velocity Rush/Create Prototype Content", priority = 1)]
@@ -49,9 +50,10 @@ namespace VelocityRush.EditorTools
             Material roadMaterial = CreateMaterial("Assets/Art/Materials/M_Road.mat", new Color(.07f, .08f, .10f), .15f, .05f);
             Material groundMaterial = CreateMaterial("Assets/Art/Materials/M_Ground.mat", new Color(.25f, .18f, .10f), 0f, .9f);
             GameObject carPrefab = CreateCarPrefab();
-            GameObject segmentPrefab = CreateEndlessSegmentPrefab(roadMaterial, groundMaterial);
+            TrackPiece[] modularPieces = CreateModularTrackPiecePrefabs(roadMaterial);
             GameObject coinPrefab = CreateCollectiblePrefab("Coin", new Color(1f, .72f, .05f), CollectibleType.Coin);
             GameObject nitroPrefab = CreateCollectiblePrefab("NitroPickup", new Color(.1f, .8f, 1f), CollectibleType.Nitro);
+            GameObject repairPrefab = CreateRepairPowerUpPrefab();
             GameObject hazardPrefab = CreateHazardPrefab();
             CarDefinition[] cars = CreateCars(carPrefab);
             TrackDefinition[] tracks = CreateTracks();
@@ -63,7 +65,9 @@ namespace VelocityRush.EditorTools
             CreateRaceScene("DesertCircuit", new Color(.42f, .26f, .10f), roadMaterial, groundMaterial);
             CreateRaceScene("CityCircuit", new Color(.15f, .19f, .23f), roadMaterial, groundMaterial);
             CreateRaceScene("CoastCircuit", new Color(.12f, .32f, .38f), roadMaterial, groundMaterial);
-            CreateEndlessScene(segmentPrefab, coinPrefab, nitroPrefab, hazardPrefab, groundMaterial);
+            CreateRaceScene("MountainSprint", new Color(.22f, .31f, .20f), roadMaterial, groundMaterial);
+            CreateRaceScene("HarborRun", new Color(.10f, .18f, .29f), roadMaterial, groundMaterial);
+            CreateEndlessScene(modularPieces, coinPrefab, nitroPrefab, repairPrefab, hazardPrefab);
             ConfigureBuildSettings();
             ConfigurePlayerSettings();
 
@@ -87,7 +91,7 @@ namespace VelocityRush.EditorTools
             string[] folders =
             {
                 "Assets/Resources/Data/Cars", "Assets/Resources/Data/Tracks", "Assets/Resources/Data/Campaign",
-                "Assets/Resources/Prefabs", "Assets/Settings/Rendering", "Assets/Art/Materials", "Assets/Prefabs/Cars"
+                "Assets/Resources/Prefabs", "Assets/Resources/Prefabs/TrackPieces", "Assets/Settings/Rendering", "Assets/Art/Materials", "Assets/Prefabs/Cars", "Assets/Prefabs/TrackPieces"
             };
             foreach (string folder in folders) EnsureFolder(folder);
         }
@@ -216,6 +220,148 @@ namespace VelocityRush.EditorTools
             Object.DestroyImmediate(visual.GetComponent<Collider>());
         }
 
+        private static TrackPiece[] CreateModularTrackPiecePrefabs(Material roadMaterial)
+        {
+            return new[]
+            {
+                CreateTrackPiecePrefab("Straight", TrackPieceType.Straight, roadMaterial, 0f, 6f, false),
+                CreateTrackPiecePrefab("LeftCurve", TrackPieceType.LeftCurve, roadMaterial, .08f, 2.1f, false),
+                CreateTrackPiecePrefab("RightCurve", TrackPieceType.RightCurve, roadMaterial, .08f, 2.1f, false),
+                CreateTrackPiecePrefab("HillUp", TrackPieceType.HillUp, roadMaterial, .25f, 1.2f, false),
+                CreateTrackPiecePrefab("HillDown", TrackPieceType.HillDown, roadMaterial, .35f, 1.1f, false),
+                CreateTrackPiecePrefab("Jump", TrackPieceType.Jump, roadMaterial, .48f, .65f, true),
+                CreateTrackPiecePrefab("Chicane", TrackPieceType.Chicane, roadMaterial, .65f, .8f, true)
+            };
+        }
+
+        private static TrackPiece CreateTrackPiecePrefab(string name, TrackPieceType type, Material roadMaterial,
+            float minimumDifficulty, float selectionWeight, bool special)
+        {
+            string path = "Assets/Resources/Prefabs/TrackPieces/PF_Track_" + name + ".prefab";
+            GameObject existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (existing != null) return existing.GetComponent<TrackPiece>();
+
+            GameObject root = new GameObject("Track_" + name);
+            root.layer = LayerMask.NameToLayer("Track");
+            TrackPiece piece = root.AddComponent<TrackPiece>();
+            Transform entry = CreateLocalMarker(root.transform, "Entry", Vector3.zero, Quaternion.identity);
+            Vector3 exitPosition = new Vector3(0f, 0f, 72f);
+            Quaternion exitRotation = Quaternion.identity;
+            Vector3[] aiMarkers;
+
+            switch (type)
+            {
+                case TrackPieceType.LeftCurve:
+                    CreateRoadBlock(root.transform, "RoadA", new Vector3(0f, 0f, 21f), new Vector3(12f, .16f, 42f), Quaternion.identity, roadMaterial);
+                    CreateRoadBlock(root.transform, "RoadB", new Vector3(-21f, 0f, 42f), new Vector3(42f, .16f, 12f), Quaternion.identity, roadMaterial);
+                    exitPosition = new Vector3(-42f, 0f, 42f);
+                    exitRotation = Quaternion.Euler(0f, -90f, 0f);
+                    aiMarkers = new[] { new Vector3(0f, .25f, 16f), new Vector3(-3f, .25f, 35f), new Vector3(-18f, .25f, 42f), new Vector3(-36f, .25f, 42f) };
+                    break;
+                case TrackPieceType.RightCurve:
+                    CreateRoadBlock(root.transform, "RoadA", new Vector3(0f, 0f, 21f), new Vector3(12f, .16f, 42f), Quaternion.identity, roadMaterial);
+                    CreateRoadBlock(root.transform, "RoadB", new Vector3(21f, 0f, 42f), new Vector3(42f, .16f, 12f), Quaternion.identity, roadMaterial);
+                    exitPosition = new Vector3(42f, 0f, 42f);
+                    exitRotation = Quaternion.Euler(0f, 90f, 0f);
+                    aiMarkers = new[] { new Vector3(0f, .25f, 16f), new Vector3(3f, .25f, 35f), new Vector3(18f, .25f, 42f), new Vector3(36f, .25f, 42f) };
+                    break;
+                case TrackPieceType.HillUp:
+                    CreateRoadBlock(root.transform, "HillRoad", new Vector3(0f, 5f, 30f), new Vector3(12f, .16f, 61f), Quaternion.Euler(-9.5f, 0f, 0f), roadMaterial);
+                    exitPosition = new Vector3(0f, 10f, 60f);
+                    exitRotation = Quaternion.Euler(-9.5f, 0f, 0f);
+                    aiMarkers = new[] { new Vector3(0f, 1.8f, 15f), new Vector3(0f, 4.3f, 30f), new Vector3(0f, 6.8f, 45f) };
+                    break;
+                case TrackPieceType.HillDown:
+                    CreateRoadBlock(root.transform, "HillRoad", new Vector3(0f, -5f, 30f), new Vector3(12f, .16f, 61f), Quaternion.Euler(9.5f, 0f, 0f), roadMaterial);
+                    exitPosition = new Vector3(0f, -10f, 60f);
+                    exitRotation = Quaternion.Euler(9.5f, 0f, 0f);
+                    aiMarkers = new[] { new Vector3(0f, -1.8f, 15f), new Vector3(0f, -4.3f, 30f), new Vector3(0f, -6.8f, 45f) };
+                    break;
+                case TrackPieceType.Jump:
+                    CreateRoadBlock(root.transform, "Ramp", new Vector3(0f, 3.5f, 15f), new Vector3(12f, .16f, 31f), Quaternion.Euler(-13f, 0f, 0f), roadMaterial);
+                    CreateRoadBlock(root.transform, "Landing", new Vector3(0f, 3.5f, 55f), new Vector3(12f, .16f, 31f), Quaternion.Euler(13f, 0f, 0f), roadMaterial);
+                    exitPosition = new Vector3(0f, 0f, 70f);
+                    aiMarkers = new[] { new Vector3(0f, 1.2f, 12f), new Vector3(0f, 6.5f, 28f), new Vector3(0f, 5.5f, 48f), new Vector3(0f, .3f, 66f) };
+                    break;
+                case TrackPieceType.Chicane:
+                    CreateRoadBlock(root.transform, "RoadA", new Vector3(-5f, 0f, 18f), new Vector3(12f, .16f, 38f), Quaternion.Euler(0f, -15f, 0f), roadMaterial);
+                    CreateRoadBlock(root.transform, "RoadB", new Vector3(5f, 0f, 54f), new Vector3(12f, .16f, 38f), Quaternion.Euler(0f, 15f, 0f), roadMaterial);
+                    exitPosition = new Vector3(0f, 0f, 72f);
+                    aiMarkers = new[] { new Vector3(-4f, .25f, 15f), new Vector3(-8f, .25f, 30f), new Vector3(6f, .25f, 49f), new Vector3(3f, .25f, 65f) };
+                    break;
+                default:
+                    CreateRoadBlock(root.transform, "Road", new Vector3(0f, 0f, 36f), new Vector3(12f, .16f, 72f), Quaternion.identity, roadMaterial);
+                    aiMarkers = new[] { new Vector3(0f, .25f, 18f), new Vector3(0f, .25f, 42f), new Vector3(0f, .25f, 66f) };
+                    break;
+            }
+
+            Transform exit = CreateLocalMarker(root.transform, "Exit", exitPosition, exitRotation);
+            Transform[] ai = CreateLocalMarkers(root.transform, "AI", aiMarkers);
+            Transform[] collectibles = CreateLocalMarkers(root.transform, "Collectible", new[]
+            {
+                new Vector3(-3.2f, 1f, 18f), new Vector3(0f, 1f, 36f), new Vector3(3.2f, 1f, 54f), new Vector3(0f, 1f, 66f)
+            });
+            Transform[] powerUps = CreateLocalMarkers(root.transform, "PowerUp", new[] { new Vector3(0f, 1f, 48f) });
+            Transform[] obstacles = CreateLocalMarkers(root.transform, "Obstacle", new[]
+            {
+                new Vector3(-3f, .55f, 30f), new Vector3(3f, .55f, 58f)
+            });
+
+            CreateRoadBlock(root.transform, "BarrierLeft", new Vector3(-6.65f, .55f, 36f), new Vector3(.25f, 1f, 72f), Quaternion.identity, null);
+            CreateRoadBlock(root.transform, "BarrierRight", new Vector3(6.65f, .55f, 36f), new Vector3(.25f, 1f, 72f), Quaternion.identity, null);
+            SetObject(piece, "entryAnchor", entry); SetObject(piece, "exitAnchor", exit);
+            SetFloat(piece, "nominalLength", Mathf.Max(50f, exitPosition.magnitude));
+            SetEnum(piece, "pieceType", (int)type); SetFloat(piece, "minimumDifficulty", minimumDifficulty);
+            SetFloat(piece, "selectionWeight", selectionWeight); SetBool(piece, "specialPiece", special);
+            SetArray(piece, "aiWaypoints", ai); SetArray(piece, "collectibleSlots", collectibles);
+            SetArray(piece, "powerUpSlots", powerUps); SetArray(piece, "obstacleSlots", obstacles);
+
+            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
+            Object.DestroyImmediate(root);
+            return prefab.GetComponent<TrackPiece>();
+        }
+
+        private static Transform CreateLocalMarker(Transform parent, string name, Vector3 localPosition, Quaternion localRotation)
+        {
+            GameObject marker = new GameObject(name);
+            marker.transform.SetParent(parent, false);
+            marker.transform.localPosition = localPosition;
+            marker.transform.localRotation = localRotation;
+            return marker.transform;
+        }
+
+        private static Transform[] CreateLocalMarkers(Transform parent, string prefix, Vector3[] positions)
+        {
+            Transform[] markers = new Transform[positions.Length];
+            for (int i = 0; i < positions.Length; i++)
+                markers[i] = CreateLocalMarker(parent, prefix + "_" + i, positions[i], Quaternion.identity);
+            return markers;
+        }
+
+        private static GameObject CreateRoadBlock(Transform parent, string name, Vector3 localPosition, Vector3 scale, Quaternion localRotation, Material material)
+        {
+            GameObject block = CreateBlock(parent, name, localPosition, scale, material);
+            block.transform.localRotation = localRotation;
+            block.layer = LayerMask.NameToLayer("Track");
+            return block;
+        }
+
+        private static GameObject CreateRepairPowerUpPrefab()
+        {
+            const string path = "Assets/Resources/Prefabs/PF_RepairPickup.prefab";
+            GameObject existing = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (existing != null) return existing;
+            GameObject root = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            root.name = "RepairPickup";
+            root.transform.localScale = Vector3.one * .7f;
+            SphereCollider collider = root.GetComponent<SphereCollider>(); collider.isTrigger = true; collider.radius = .9f;
+            root.AddComponent<PowerUpPickup>();
+            root.GetComponent<Renderer>().sharedMaterial = CreateMaterial("Assets/Art/Materials/M_RepairPickup.mat", new Color(.18f, 1f, .42f), .4f, .75f);
+            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, path);
+            Object.DestroyImmediate(root);
+            return prefab;
+        }
+
         private static GameObject CreateEndlessSegmentPrefab(Material roadMaterial, Material groundMaterial)
         {
             const string path = "Assets/Resources/Prefabs/PF_EndlessSegment.prefab";
@@ -306,9 +452,9 @@ namespace VelocityRush.EditorTools
 
         private static TrackDefinition[] CreateTracks()
         {
-            string[] ids = { "desert_circuit", "city_circuit", "coast_circuit" };
-            string[] names = { "Desert Circuit", "Neon City Circuit", "Coastline Circuit" };
-            string[] scenes = { "DesertCircuit", "CityCircuit", "CoastCircuit" };
+            string[] ids = { "desert_circuit", "city_circuit", "coast_circuit", "mountain_sprint", "harbor_run" };
+            string[] names = { "Desert Circuit", "Neon City Circuit", "Coastline Circuit", "Mountain Sprint", "Harbor Run" };
+            string[] scenes = { "DesertCircuit", "CityCircuit", "CoastCircuit", "MountainSprint", "HarborRun" };
             TrackDefinition[] result = new TrackDefinition[ids.Length];
             for (int i = 0; i < ids.Length; i++)
             {
@@ -425,6 +571,7 @@ namespace VelocityRush.EditorTools
             CreateBlock(track.transform, "EastRoad", new Vector3(45f, 0f, 0f), new Vector3(14f, .15f, 134f), roadMaterial);
             CreateBlock(track.transform, "NorthRoad", new Vector3(0f, 0f, 60f), new Vector3(104f, .15f, 14f), roadMaterial);
             CreateBlock(track.transform, "WestRoad", new Vector3(-45f, 0f, 0f), new Vector3(14f, .15f, 134f), roadMaterial);
+            CreateStaticCircuitObstacles(track.transform, sceneName);
 
             GameObject raceRoot = new GameObject("RaceManager");
             RaceManager race = raceRoot.AddComponent<RaceManager>();
@@ -442,6 +589,33 @@ namespace VelocityRush.EditorTools
             CreateMinimapCamera();
             CreateHud();
             SaveScene(path);
+        }
+
+        private static void CreateStaticCircuitObstacles(Transform parent, string sceneName)
+        {
+            Vector3[] positions;
+            switch (sceneName)
+            {
+                case "MountainSprint": positions = new[] { new Vector3(26f, .65f, -60f), new Vector3(45f, .65f, 24f), new Vector3(-22f, .65f, 60f) }; break;
+                case "HarborRun": positions = new[] { new Vector3(12f, .65f, -60f), new Vector3(45f, .65f, -20f), new Vector3(-45f, .65f, 28f) }; break;
+                case "CityCircuit": positions = new[] { new Vector3(28f, .65f, -60f), new Vector3(45f, .65f, 14f) }; break;
+                case "CoastCircuit": positions = new[] { new Vector3(-22f, .65f, -60f), new Vector3(45f, .65f, 38f) }; break;
+                default: positions = new[] { new Vector3(31f, .65f, -60f) }; break;
+            }
+            Material material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Art/Materials/M_Obstacle.mat");
+            for (int i = 0; i < positions.Length; i++)
+            {
+                GameObject obstacle = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                obstacle.name = "TrackObstacle_" + i;
+                obstacle.transform.SetParent(parent);
+                obstacle.transform.position = positions[i];
+                obstacle.transform.localScale = new Vector3(1.2f, 1.25f, 1.2f);
+                obstacle.layer = LayerMask.NameToLayer("Hazard");
+                BoxCollider collider = obstacle.GetComponent<BoxCollider>();
+                collider.isTrigger = true;
+                obstacle.AddComponent<Hazard>();
+                if (material != null) obstacle.GetComponent<Renderer>().sharedMaterial = material;
+            }
         }
 
         private static Transform[] CreateCircuitWaypoints(Transform parent)
@@ -467,7 +641,7 @@ namespace VelocityRush.EditorTools
             return result;
         }
 
-        private static void CreateEndlessScene(GameObject segment, GameObject coin, GameObject nitro, GameObject hazard, Material groundMaterial)
+        private static void CreateEndlessScene(TrackPiece[] modularPieces, GameObject coin, GameObject nitro, GameObject repair, GameObject hazard)
         {
             string path = SceneFolder + "/EndlessRun.unity";
             if (!CanOverwrite(path)) return;
@@ -476,10 +650,13 @@ namespace VelocityRush.EditorTools
             GameObject root = new GameObject("EndlessRunManager");
             EndlessRunManager run = root.AddComponent<EndlessRunManager>();
             Transform start = CreateTransform(root.transform, "PlayerStart", new Vector3(0f, .4f, 5f), Quaternion.identity);
-            GameObject generatorObject = new GameObject("EndlessTrackGenerator");
-            EndlessTrackGenerator generator = generatorObject.AddComponent<EndlessTrackGenerator>();
-            SetArray(generator, "segmentPrefabs", new[] { segment }); SetObject(generator, "coinPrefab", coin); SetObject(generator, "nitroPrefab", nitro); SetObject(generator, "obstaclePrefab", hazard);
-            SetObject(run, "playerStart", start); SetObject(run, "trackGenerator", generator);
+            GameObject managerObject = new GameObject("TrackManager");
+            TrackManager trackManager = managerObject.AddComponent<TrackManager>();
+            SetArray(trackManager, "modularPiecePrefabs", modularPieces);
+            SetArray(trackManager, "collectiblePrefabs", new[] { coin, nitro });
+            SetArray(trackManager, "powerUpPrefabs", new[] { repair });
+            SetArray(trackManager, "obstaclePrefabs", new[] { hazard });
+            SetObject(run, "playerStart", start); SetObject(run, "trackManager", trackManager);
             CreateRaceCamera();
             CreateMinimapCamera();
             CreateHud();
@@ -718,6 +895,18 @@ namespace VelocityRush.EditorTools
         {
             SerializedObject serialized = new SerializedObject(target); SerializedProperty property = serialized.FindProperty(propertyName);
             if (property == null) return; property.intValue = value; serialized.ApplyModifiedPropertiesWithoutUndo(); EditorUtility.SetDirty(target);
+        }
+
+        private static void SetFloat(Object target, string propertyName, float value)
+        {
+            SerializedObject serialized = new SerializedObject(target); SerializedProperty property = serialized.FindProperty(propertyName);
+            if (property == null) return; property.floatValue = value; serialized.ApplyModifiedPropertiesWithoutUndo(); EditorUtility.SetDirty(target);
+        }
+
+        private static void SetBool(Object target, string propertyName, bool value)
+        {
+            SerializedObject serialized = new SerializedObject(target); SerializedProperty property = serialized.FindProperty(propertyName);
+            if (property == null) return; property.boolValue = value; serialized.ApplyModifiedPropertiesWithoutUndo(); EditorUtility.SetDirty(target);
         }
 
         private static void SetEnum(Object target, string propertyName, int value) => SetInt(target, propertyName, value);

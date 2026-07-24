@@ -2,7 +2,7 @@
 
 **Velocity Rush** is a Unity 2022.3 LTS / URP mobile racing-game foundation for Android and iOS. It contains an intentionally dependency-light, WheelCollider-driven playable prototype generator plus a production-ready folder and code architecture for replacing its primitive art with finished content.
 
-> The repository contains source and setup tooling—not generated Unity Library files or third-party assets. On first import run **Velocity Rush → Create Prototype Content**. That creates the URP assets, seven scenes, six car definitions, ten campaign levels, prototype prefabs, UI, and Build Settings locally.
+> The repository contains source and setup tooling—not generated Unity Library files or third-party assets. On first import run **Velocity Rush → Create Prototype Content**. That creates the URP assets, nine scenes, six car definitions, five track definitions, ten campaign levels, modular prototype prefabs, UI, and Build Settings locally.
 
 ## Included gameplay foundation
 
@@ -10,7 +10,7 @@
 - **Garage:** six unlockable cars with speed, acceleration, handling, coin costs, and persistent selection.
 - **Modes:** Endless, 10-level Campaign, Time Trial with local best times, and 3–5 opponent Quick Race.
 - **Mobile driving:** on-screen steering wheel + hold pedals/nitro, optional tilt, and editor keyboard fallback.
-- **Racing systems:** WheelCollider car physics, waypoint AI, grid/countdown, checkpoint/lap validation, procedural endless straight-segment generation, hazards, coins, and nitro pickups.
+- **Racing systems:** WheelCollider car physics, waypoint AI/overtakes, grid/countdown, checkpoint/lap validation, modular fixed circuits, pooled procedural Endless generation, hazards, coins, nitro and repair pickups.
 - **Presentation hooks:** chase/cinematic camera, 256px minimap, HUD/speedometer/timer/lap/score/nitro, mobile controls, engine/tire audio hooks, and dust/sparks/nitro particle hooks.
 - **Mobile performance posture:** URP, one mixed/baked directional light per prototype track, low-poly geometry, no required paid dependencies, and explicit quality guidance.
 
@@ -27,6 +27,7 @@
 
 - [Setup and scene wiring](Docs/SETUP.md)
 - [Full WheelCollider car controller, wheel setup, tuning and mobile optimisation](Docs/CAR_CONTROLLER.md)
+- [Modular tracks, campaign examples, AI routes and pooled Endless generation](Docs/TRACK_SYSTEMS.md)
 - [Android/iOS, Quality, and URP recommendations](Docs/MOBILE_SETTINGS.md)
 - [Asset import shortlist and licensing checklist](Docs/ASSET_SHORTLIST.md)
 - [Architecture and extension notes](Docs/ARCHITECTURE.md)
@@ -47,7 +48,8 @@ Assets/
     Cars/              # WheelCollider player vehicle and waypoint AI
     Input/             # Mobile wheel/pedals and editor fallback
     Race/              # Grid, checkpoints, laps, collectibles, hazards and waypoints
-    Endless/           # Segment generator and escalating endless-run scoring
+    Tracks/            # Modular TrackPiece metadata, fixed routes and pooled Endless TrackManager
+    Endless/           # Endless-run scoring (legacy straight generator kept for compatibility)
     UI/                # HUD, menu, garage, level-select and settings controllers
     Audio/, Camera/, VFX/, Progression/, Data/, Editor/
   Settings/            # Generated URP settings and mobile profiles
