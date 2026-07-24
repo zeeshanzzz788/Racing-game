@@ -77,7 +77,10 @@ namespace VelocityRush.EditorTools
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("Velocity Rush prototype created. Open Assets/Scenes/MainMenu.unity and press Play.");
-            EditorUtility.DisplayDialog("Velocity Rush", "Prototype content and Build Settings were created.\n\nOpen MainMenu and press Play. See Docs/SETUP.md before making a mobile build.", "OK");
+            if (!Application.isBatchMode)
+            {
+                EditorUtility.DisplayDialog("Velocity Rush", "Prototype content and Build Settings were created.\n\nOpen MainMenu and press Play. See Docs/SETUP.md before making a mobile build.", "OK");
+            }
         }
 
         [MenuItem("Velocity Rush/Open Setup Guide", priority = 20)]
@@ -914,6 +917,9 @@ namespace VelocityRush.EditorTools
         private static bool CanOverwrite(string path)
         {
             if (!System.IO.File.Exists(path)) return true;
+            // CI must never wait for an editor dialog. A clean checkout normally has no generated
+            // scenes, and rerunning the batch build should deterministically refresh them.
+            if (Application.isBatchMode) return true;
             return EditorUtility.DisplayDialog("Velocity Rush", "Replace existing " + System.IO.Path.GetFileName(path) + "?\nChoose Cancel to preserve this scene.", "Replace", "Keep Existing");
         }
 
@@ -938,6 +944,8 @@ namespace VelocityRush.EditorTools
             PlayerSettings.companyName = "Your Studio";
             PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.yourstudio.velocityrush");
             PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.iOS, "com.yourstudio.velocityrush");
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+            PlayerSettings.SetScriptingBackend(BuildTargetGroup.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToLandscapeLeft = true;
             PlayerSettings.allowedAutorotateToLandscapeRight = true;
