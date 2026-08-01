@@ -27,8 +27,6 @@ Or let **GitHub Actions** generate content during the APK build.
 
 See **[Docs/GITHUB_APK_BUILD.md](Docs/GITHUB_APK_BUILD.md)**.
 
-Short version:
-
 1. Actions → **Request Unity activation file** → download `.alf`  
 2. https://license.unity3d.com/manual → get `Unity_lic.ulf`  
 3. `gh secret set UNITY_LICENSE < Unity_lic.ulf`  
@@ -48,7 +46,3 @@ adb install -r VelocityRush.apk
 | [Docs/TRACK_SYSTEMS.md](Docs/TRACK_SYSTEMS.md) | Tracks / endless |
 | [Docs/MOBILE_SETTINGS.md](Docs/MOBILE_SETTINGS.md) | Mobile URP |
 | [Docs/MOBILE_POLISH.md](Docs/MOBILE_POLISH.md) | FX / graphics |
-
-## License
-
-Your game code in this repository. Third-party Unity packages follow their own terms.
