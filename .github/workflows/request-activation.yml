@@ -1,5 +1,8 @@
 name: Request Unity activation file
 
+# game-ci no longer supports automatic .alf generation.
+# This workflow only prints the current (supported) Personal license steps.
+
 on:
   workflow_dispatch:
 
@@ -7,19 +10,47 @@ permissions:
   contents: read
 
 jobs:
-  request:
-    name: Generate .alf activation file
+  instructions:
+    name: Personal license setup steps
     runs-on: ubuntu-22.04
     steps:
-      - name: Request manual activation file
-        id: activation
-        uses: game-ci/unity-request-activation-file@v2
-        with:
-          unityVersion: 2022.3.62f1
+      - name: How to create UNITY_LICENSE secret
+        run: |
+          cat <<'EOF'
+          ============================================================
+          Velocity Rush — Unity Personal license for GitHub Actions
+          ============================================================
 
-      - name: Upload .alf
-        uses: actions/upload-artifact@v4
-        with:
-          name: UnityActivationFile
-          path: ${{ steps.activation.outputs.filePath }}
-          retention-days: 7
+          (game-ci no longer uses the old .alf download action)
+
+          1. Install Unity Hub on your PC:
+             https://unity.com/download
+
+          2. Log in with your free Unity ID
+
+          3. Unity Hub → Preferences → Licenses → Add
+             → Get a free personal license
+             (click Add even if a license already shows)
+
+          4. Copy the license file contents from:
+             Windows: C:\ProgramData\Unity\Unity_lic.ulf
+             macOS:   /Library/Application Support/Unity/Unity_lic.ulf
+             Linux:   ~/.local/share/unity3d/Unity/Unity_lic.ulf
+
+          5. Add GitHub secrets (repo Settings → Secrets → Actions):
+
+             UNITY_LICENSE   = full text of Unity_lic.ulf
+             UNITY_EMAIL     = your Unity account email
+             UNITY_PASSWORD  = your Unity account password
+
+             Or with GitHub CLI:
+               gh secret set UNITY_LICENSE  --repo zeeshanzzz788/Racing-game < Unity_lic.ulf
+               gh secret set UNITY_EMAIL    --repo zeeshanzzz788/Racing-game
+               gh secret set UNITY_PASSWORD --repo zeeshanzzz788/Racing-game
+
+          6. Run workflow: "Android build"
+             Download artifact: velocity-rush-android → VelocityRush.apk
+
+          Docs: https://game.ci/docs/github/activation
+          ============================================================
+          EOF

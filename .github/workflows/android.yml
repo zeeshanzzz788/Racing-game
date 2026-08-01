@@ -25,13 +25,18 @@ jobs:
       has_license: ${{ steps.check.outputs.has_license }}
     steps:
       - id: check
+        env:
+          # secrets are not directly testable for emptiness in all contexts; use length via shell
+          U_LIC: ${{ secrets.UNITY_LICENSE }}
+          U_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          U_PASS: ${{ secrets.UNITY_PASSWORD }}
         run: |
-          if [ -n "${{ secrets.UNITY_LICENSE }}" ] || { [ -n "${{ secrets.UNITY_EMAIL }}" ] && [ -n "${{ secrets.UNITY_PASSWORD }}" ]; }; then
+          if [ -n "$U_LIC" ] && [ -n "$U_EMAIL" ] && [ -n "$U_PASS" ]; then
             echo "has_license=true" >> "$GITHUB_OUTPUT"
-            echo "Unity credentials present."
+            echo "Unity credentials present (LICENSE + EMAIL + PASSWORD)."
           else
             echo "has_license=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Missing UNITY_LICENSE (or UNITY_EMAIL+UNITY_PASSWORD). Run 'Request Unity activation file' workflow, activate at license.unity3d.com, then: gh secret set UNITY_LICENSE < Unity_lic.ulf"
+            echo "::warning::Need secrets UNITY_LICENSE + UNITY_EMAIL + UNITY_PASSWORD. See Docs/GITHUB_APK_BUILD.md or run workflow 'Request Unity activation file'."
           fi
 
   build:
@@ -63,7 +68,6 @@ jobs:
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
         with:
           projectPath: .
-          # Matches ProjectSettings/ProjectVersion.txt
           unityVersion: 2022.3.62f1
           targetPlatform: Android
           buildMethod: VelocityRush.EditorTools.AndroidBuild.Build
@@ -93,29 +97,27 @@ jobs:
         run: |
           cat <<'EOF'
           ============================================================
-          Velocity Rush — Unity license secrets are not configured
+          Velocity Rush — configure Unity secrets, then rebuild
           ============================================================
 
-          1) Run workflow: "Request Unity activation file"
-          2) Download the .alf artifact
-          3) Open https://license.unity3d.com/manual
-             (free Personal license is fine)
-          4) Upload .alf → download Unity_lic.ulf
-          5) Add GitHub secrets on this repo:
+          FULL GAME is already in this repo. CI will generate all scenes
+          (menu, garage, 5 circuits, endless, 6 cars, upgrades, AI…) and
+          output VelocityRush.apk.
 
-             gh secret set UNITY_LICENSE < Unity_lic.ulf
-             # optional for some seats:
-             # gh secret set UNITY_EMAIL
-             # gh secret set UNITY_PASSWORD
+          1) Unity Hub → Preferences → Licenses → Add → free Personal
+          2) Open Unity_lic.ulf:
+               Windows: C:\ProgramData\Unity\Unity_lic.ulf
+               macOS:   /Library/Application Support/Unity/Unity_lic.ulf
+               Linux:   ~/.local/share/unity3d/Unity/Unity_lic.ulf
+          3) GitHub repo Secrets (Actions):
+               UNITY_LICENSE   = file contents
+               UNITY_EMAIL     = Unity login email
+               UNITY_PASSWORD  = Unity login password
+          4) Re-run workflow "Android build"
+          5) Download artifact "velocity-rush-android"
 
-          6) Re-run "Android build" (workflow_dispatch or push)
-
-          Full game features are generated at build time by:
-            VelocityRush.EditorTools.AndroidBuild.Build
-            → VelocityRushProjectBootstrapper.CreatePrototypeContent()
-
-          Modes: Campaign (10 levels), Quick Race, Time Trial, Endless
-          Garage unlocks + upgrades, AI, nitro, polish, mobile controls
+          Docs: Docs/GITHUB_APK_BUILD.md
+          game.ci: https://game.ci/docs/github/activation
           ============================================================
           EOF
           exit 1
